@@ -1,0 +1,23 @@
+HOW_TO:
+1. Run each command below one by one (if necessary change UPD addres to adres of server where vpn in installed or its domain eg.patlas.pl)
+2. Created docker volume will be located at:
+    /var/lib/docker/volumes
+    /var/snap/docker/common/var-lib-docker/volumes
+
+3. Set static IP:
+In /etc/openvpn/ccd (on docker image) insert file named as client name (set for ovpn client certificate) and inside file enter:
+ifconfig-push 192.168.255.10 255.255.255.255
+
+
+COMMAND:
+
+OVPN_DATA="ovpn-data-patlas"
+docker volume create --name $OVPN_DATA
+docker run -v $OVPN_DATA:/etc/openvpn --rm patlas/openvpn ovpn_genconfig -u udp://149.56.134.202
+docker run -v $OVPN_DATA:/etc/openvpn --rm -it patlas/openvpn ovpn_initpki
+docker run -v $OVPN_DATA:/etc/openvpn -d -p 1194:1194/udp --cap-add=NET_ADMIN patlas/openvpn
+
+
+GENERATING CLIENT CERT (set custom CLIENTNAME):
+docker run -v $OVPN_DATA:/etc/openvpn --rm -it patlas/openvpn easyrsa build-client-full CLIENTNAME nopass
+docker run -v $OVPN_DATA:/etc/openvpn --rm patlas/openvpn ovpn_getclient CLIENTNAME > CLIENTNAME.ovpn
